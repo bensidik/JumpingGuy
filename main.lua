@@ -48,8 +48,8 @@ function love.update(dt)
     for _, plat in ipairs(platforms) do
         if checkCollision(player, plat) then
             if player.y + player.height <= plat.y + player.yVelocity * dt then
-                player.y = plat.y - player.height
-                player.yVelocity = 0
+                player.y = plat.y - (player.height)
+                player.yVelocity = 1
                 player.onGround = true
             end
         end
