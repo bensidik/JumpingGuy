@@ -1,5 +1,7 @@
 
 
+
+
 --player table
 
 player = {
@@ -9,15 +11,27 @@ player = {
     height = 48,
     speed = 200,
     yVelocity = 0,
-    jumpHeight = -500,
-    gravity = -800,
-    onGround = false
+    jumpHeight = -400,
+    gravity = -500,
+    onGround = false,
+    images = {},
+    currentFrame = 1,
+    animationTimer = 0,
+    animationInterval = 0.2
 }
+
 
 function love.load()
     love.graphics.setBackgroundColor(0.4, 0.6, 0.9)
-    player.image = love.graphics.newImage("IdleNoob.png")
+    player.images[1] = love.graphics.newImage("IdleNoob.png")
+    player.images[2] = love.graphics.newImage("Walk1.png")
     platformImage = love.graphics.newImage("platform.png")
+    Walking = love.audio.newSource("step_1.wav", "static")
+    Walking:setLooping(false)
+    Walking:setVolume(1.0)
+    BackgroundMusic = love.audio.newSource("GameBackgroundMusic.mp3", "stream")
+    BackgroundMusic:setLooping(true)
+    BackgroundMusic:setVolume(0.5)
 
      -- Define platforms
     platforms = {
@@ -31,15 +45,25 @@ function love.load()
 end
 
 function love.update(dt)
+    BackgroundMusic:play()
 -- Gravity
     if not player.onGround then
         player.yVelocity = player.yVelocity - player.gravity * dt
     end
     -- Movement
+    local moving = false
     if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
         player.x = player.x - player.speed * dt
+        if moving then
+        WalkSound() 
+        end
+        moving = true
     elseif love.keyboard.isDown("right") or love.keyboard.isDown("d") then
         player.x = player.x + player.speed * dt
+        if moving then
+        WalkSound()
+        end
+        moving = true
     end
     -- Apply vertical velocity
     player.y = player.y + player.yVelocity * dt
@@ -54,13 +78,22 @@ function love.update(dt)
             end
         end
     end
-
+--animation update
+    if moving then
+        player.animationTimer = player.animationTimer + dt
+        if player.animationTimer >= player.animationInterval then
+            player.animationTimer = 0
+            player.currentFrame = player.currentFrame % #player.images + 1
+        end
+    else
+        player.currentFrame = 1 --Reset to idle frame
+    end
 
 end
 function love.keypressed(key)
     if key == "space" and player.onGround then
         player.yVelocity = player.jumpHeight
-        player.onGround = false
+        player.onGround = true
     end
 end
 
@@ -78,7 +111,7 @@ function love.draw()
     end
     -- Draw player
     love.graphics.setColor(1, 1, 1) -- Reset color
-    love.graphics.draw(player.image, player.x, player.y)
+    love.graphics.draw(player.images[player.currentFrame], player.x, player.y)
 
 
 end
@@ -88,4 +121,15 @@ function checkCollision(a, b)
            a.x + a.width > b.x and
            a.y < b.y + b.height and
            a.y + a.height > b.y
+end
+
+function WalkSound()
+Walking:play()
+wait(0.1)
+
+end
+
+function wait(seconds)
+    local start = love.timer.getTime()
+    while love.timer.getTime() - start < seconds do end
 end
